@@ -209,9 +209,9 @@ void cerrar_ventas(nodo_t* cabeza) {
 }
 
 void liberar_lista(nodo_t* cabeza){
-    nodo_t* temp;
+    nodo_t* memo;
     while (cabeza != NULL){
-        temp = cabeza;
+        memo = cabeza;
         cabeza = cabeza->siguiente;
         free(temp);
     }

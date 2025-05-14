@@ -26,12 +26,12 @@ typedef struct nodo {
     struct nodo* siguiente;
 } nodo_t;
 
-void registrar_venta(nodo_t** cabeza);
-void mostrar_asientos_disponibles(nodo_t* cabeza);
-void consultar_asiento(nodo_t* cabeza);
-void cerrar_ventas(nodo_t* cabeza);
-void liberar_lista(nodo_t* cabeza);
-bool asiento_ocupado(nodo_t* cabeza, int numero);
+void registrar_venta(nodo_t** inicio);
+void mostrar_asientos_disponibles(nodo_t* inicio);
+void consultar_asiento(nodo_t* inicio);
+void cerrar_ventas(nodo_t* inicio);
+void liberar_lista(nodo_t* inicio);
+bool asiento_ocupado(nodo_t* inicio, int numero);
 
 int main() {
     nodo_t* lista = NULL;
@@ -72,18 +72,18 @@ int main() {
     return 0;
 }
 
-bool asiento_ocupado(nodo_t* cabeza, int numero){
-    while (cabeza != NULL){
-        if (cabeza->reserva.estado && cabeza->reserva.numero_asiento == numero) {
+bool asiento_ocupado(nodo_t* inicio, int numero){
+    while (inicio != NULL){
+        if (inicio->reserva.estado && inicio->reserva.numero_asiento == numero) {
             return true;
         }
-    cabeza = cabeza->siguiente;
+    inicio = inicio->siguiente;
     }
     return false;
 }
 
 
-void registrar_venta(nodo_t** cabeza) {
+void registrar_venta(nodo_t** inicio) {
     int asiento;
     
     do {
@@ -92,7 +92,7 @@ void registrar_venta(nodo_t** cabeza) {
         
         if (asiento >= 100 || asiento < 0) {
             printf("Asiento invalido");
-        }else if (asiento_ocupado(*cabeza, asiento)) {
+        }else if (asiento_ocupado(*inicio, asiento)) {
             printf("Asiento %d ocupado.", asiento);
         }else{
             break;
@@ -114,18 +114,18 @@ void registrar_venta(nodo_t** cabeza) {
     
     nuevo->reserva.numero_asiento = asiento;
     nuevo->reserva.estado = true;
-    nuevo->siguiente = *cabeza;
-    *cabeza = nuevo;
+    nuevo->siguiente = *inicio;
+    *inicio = nuevo;
 }
 
 
-void mostrar_asientos_disponibles(nodo_t* cabeza) {
+void mostrar_asientos_disponibles(nodo_t* inicio) {
     int disponibles = 0, ocupados = 0, total_recaudado = 0;
     int asientos_por_grupo = 2;
     int asientos_por_fila = 4;
     bool ocupados_vector[CAPACIDAD] = {false};
 
-    nodo_t* actual = cabeza;
+    nodo_t* actual = inicio;
     while (actual != NULL) {
         if (actual->reserva.estado) {
             ocupados_vector[actual->reserva.numero_asiento] = true;
@@ -166,7 +166,7 @@ void mostrar_asientos_disponibles(nodo_t* cabeza) {
     printf("Total recaudado: $%d\n", total_recaudado);
 }
 
-void consultar_asiento(nodo_t* cabeza) {
+void consultar_asiento(nodo_t* inicio) {
     char apellido[TAM_TXT];
     int encontrados = 0;
 
@@ -175,32 +175,32 @@ void consultar_asiento(nodo_t* cabeza) {
     scanf("%s", apellido);
 
     printf("Asientos comprados por personas con apellido '%s':\n", apellido);
-    while (cabeza != NULL) {
-        if (cabeza->reserva.estado && strcmp(cabeza->reserva.apellido, apellido) == 0) {
+    while (inicio != NULL) {
+        if (inicio->reserva.estado && strcmp(inicio->reserva.apellido, apellido) == 0) {
             printf("Asiento %d: %s %s, Fecha: %02d/%02d/%04d\n", 
-                   cabeza->reserva.numero_asiento, 
-                   cabeza->reserva.nombre, 
-                   cabeza->reserva.apellido,
-                   cabeza->reserva.fecha_venta.dia, 
-                   cabeza->reserva.fecha_venta.mes, 
-                   cabeza->reserva.fecha_venta.anio);
+                inicio->reserva.numero_asiento, 
+                inicio->reserva.nombre, 
+                inicio->reserva.apellido,
+                inicio->reserva.fecha_venta.dia, 
+                inicio->reserva.fecha_venta.mes, 
+                inicio->reserva.fecha_venta.anio);
             encontrados++;
         }
-        cabeza = cabeza->siguiente;
+        inicio = inicio->siguiente;
     }
     if (encontrados == 0) {
         printf("No se encontraron asientos vendidos a personas con el apellido '%s'.\n", apellido);
     }
 }
 
-void cerrar_ventas(nodo_t* cabeza) {
+void cerrar_ventas(nodo_t* inicio) {
     int vendidos = 0, total_recaudado = 0;
 
-    while (cabeza != NULL) {
-        if (cabeza->reserva.estado){
+    while (inicio != NULL) {
+        if (inicio->reserva.estado){
             vendidos++;
             total_recaudado += PRECIO_ASIENTO;
-            cabeza->reserva.estado = false;
+            inicio->reserva.estado = false;
         }
     }
 
@@ -208,11 +208,11 @@ void cerrar_ventas(nodo_t* cabeza) {
     printf("%d Ventas hechas", vendidos);
 }
 
-void liberar_lista(nodo_t* cabeza){
+void liberar_lista(nodo_t* inicio){
     nodo_t* memo;
-    while (cabeza != NULL){
-        memo = cabeza;
-        cabeza = cabeza->siguiente;
-        free(temp);
+    while (inicio != NULL){
+        memo = inicio;
+        inicio = inicio->siguiente;
+        free(memo);
     }
 }

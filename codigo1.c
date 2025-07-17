@@ -6,6 +6,7 @@
 #define TAM_TXT 50
 #define CAPACIDAD 100
 #define PRECIO_ASIENTO 1000
+#define ARCHIVO_RESERVAS "reservas.txt"
 
 typedef struct {
     int dia;
@@ -32,11 +33,13 @@ void consultar_asiento(nodo_t* inicio);
 void cerrar_ventas(nodo_t* inicio);
 void liberar_lista(nodo_t* inicio);
 bool asiento_ocupado(nodo_t* inicio, int numero);
+void guardar_reservas(nodo_t* inicio);
+void cargar_reservas(nodo_t** inicio);
 
 int main() {
     nodo_t* lista = NULL;
     int opcion;
-    
+    cargar_reservas(&lista);
     do {
         printf("\n--- GESTIÓN DE RESERVAS DE ASIENTOS ---\n");
         printf("1. Registrar la venta de un asiento\n");
@@ -46,10 +49,10 @@ int main() {
         printf("5. Salir\n");
         printf("Seleccione una opción: ");
         scanf("%d", &opcion);
-
         switch (opcion) {
             case 1:
                 registrar_venta(&lista);
+                guardar_reservas(lista);
                 break;
             case 2:
                 mostrar_asientos_disponibles(lista);
@@ -59,8 +62,10 @@ int main() {
                 break;
             case 4:
                 cerrar_ventas(lista);
+                guardar_reservas(lista);
                 break;
             case 5:
+                guardar_reservas(lista);
                 liberar_lista(lista);
                 printf("Saliendo del programa.\n");
                 break;
@@ -68,7 +73,6 @@ int main() {
                 printf("Opción no válida. Intente nuevamente.\n");
         }
     } while (opcion != 5);
-
     return 0;
 }
 
@@ -82,7 +86,6 @@ bool asiento_ocupado(nodo_t* inicio, int numero){
     return false;
 }
 
-
 void registrar_venta(nodo_t** inicio) {
     int asiento;
     
@@ -91,9 +94,9 @@ void registrar_venta(nodo_t** inicio) {
         scanf("%d", &asiento);
         
         if (asiento >= 100 || asiento < 0) {
-            printf("Asiento invalido");
+            printf("Asiento invalido\n");
         }else if (asiento_ocupado(*inicio, asiento)) {
-            printf("Asiento %d ocupado.", asiento);
+            printf("Asiento %d ocupado.\n", asiento);
         }else{
             break;
         }
@@ -101,13 +104,13 @@ void registrar_venta(nodo_t** inicio) {
 
     nodo_t* nuevo = malloc(sizeof(nodo_t));
     if (!nuevo) {
-        printf("Juan se gasto la memoria");
+        printf("No hay memoria suficiente\n");
         return;
     }
     
-    printf("Nombre");
+    printf("Nombre: ");
     scanf("%s", nuevo->reserva.nombre);
-    printf("Apellido");
+    printf("Apellido: ");
     scanf("%s", nuevo->reserva.apellido);
     printf("Fecha de venta (dd mm aaaa): ");
     scanf("%d %d %d", &nuevo->reserva.fecha_venta.dia, &nuevo->reserva.fecha_venta.mes, &nuevo->reserva.fecha_venta.anio);
@@ -117,7 +120,6 @@ void registrar_venta(nodo_t** inicio) {
     nuevo->siguiente = *inicio;
     *inicio = nuevo;
 }
-
 
 void mostrar_asientos_disponibles(nodo_t* inicio) {
     int disponibles = 0, ocupados = 0, total_recaudado = 0;
@@ -195,17 +197,57 @@ void consultar_asiento(nodo_t* inicio) {
 
 void cerrar_ventas(nodo_t* inicio) {
     int vendidos = 0, total_recaudado = 0;
-
-    while (inicio != NULL) {
-        if (inicio->reserva.estado){
+    nodo_t* actual = inicio;
+    while (actual != NULL) {
+        if (actual->reserva.estado) {
             vendidos++;
             total_recaudado += PRECIO_ASIENTO;
-            inicio->reserva.estado = false;
+            actual->reserva.estado = false;
         }
+        actual = actual->siguiente;
     }
-
+    guardar_reservas(inicio);
     printf("Total recaudado: $%d\n", total_recaudado);
-    printf("%d Ventas hechas", vendidos);
+    printf("%d ventas hechas\n", vendidos);
+}
+
+void guardar_reservas(nodo_t* inicio) {
+    FILE *f = fopen(ARCHIVO_RESERVAS, "w");
+    if (!f) return;
+    nodo_t* actual = inicio;
+    while (actual != NULL) {
+        fprintf(f, "%s,%s,%d,%d,%d,%d,%d\n",
+            actual->reserva.nombre,
+            actual->reserva.apellido,
+            actual->reserva.fecha_venta.dia,
+            actual->reserva.fecha_venta.mes,
+            actual->reserva.fecha_venta.anio,
+            actual->reserva.numero_asiento,
+            actual->reserva.estado ? 1 : 0);
+        actual = actual->siguiente;
+    }
+    fclose(f);
+}
+
+void cargar_reservas(nodo_t** inicio) {
+    FILE *f = fopen(ARCHIVO_RESERVAS, "r");
+    if (!f) return;
+    char nombre[TAM_TXT], apellido[TAM_TXT];
+    int dia, mes, anio, numero_asiento, estado;
+    while (fscanf(f, "%49[^,],%49[^,],%d,%d,%d,%d,%d\n", nombre, apellido, &dia, &mes, &anio, &numero_asiento, &estado) == 7) {
+        nodo_t* nuevo = malloc(sizeof(nodo_t));
+        if (!nuevo) break;
+        strcpy(nuevo->reserva.nombre, nombre);
+        strcpy(nuevo->reserva.apellido, apellido);
+        nuevo->reserva.fecha_venta.dia = dia;
+        nuevo->reserva.fecha_venta.mes = mes;
+        nuevo->reserva.fecha_venta.anio = anio;
+        nuevo->reserva.numero_asiento = numero_asiento;
+        nuevo->reserva.estado = estado ? true : false;
+        nuevo->siguiente = *inicio;
+        *inicio = nuevo;
+    }
+    fclose(f);
 }
 
 void liberar_lista(nodo_t* inicio){

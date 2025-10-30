@@ -1,6 +1,7 @@
 import os
 import csv
 from datetime import datetime
+from zoneinfo import ZoneInfo  
 
 archivo = "gastos.csv"
 
@@ -12,13 +13,14 @@ if not os.path.exists(archivo):
 descripcion = input("Ingrese la descripción del gasto: ")
 monto = float(input("Ingrese el monto ($): "))
 
-fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
+zona_arg = ZoneInfo("America/Argentina/Buenos_Aires")
+fecha = datetime.now(zona_arg).strftime("%d/%m/%Y %H:%M")
 
 with open(archivo, mode="a", newline="") as f:
     escritor = csv.writer(f)
     escritor.writerow([fecha, descripcion, monto])
 
-print(f"\nGasto registrado correctamente en '{archivo}'.")
+print(f"\n Gasto registrado correctamente en '{archivo}'.")
 
 total = 0
 with open(archivo, mode="r") as f:
